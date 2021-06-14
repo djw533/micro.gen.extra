@@ -1,5 +1,6 @@
 get_clade_nodes <- function (x, y, z){ # give phylogroups, clusters,tree
 
+
   ### cycle through the clusters - get the mrca, then subtree out to put this information on the tree:
   ###make df for the nodes, with the labels as well
   cluster_nodes <- data.frame(matrix(ncol = 3, nrow = 0))
@@ -39,11 +40,11 @@ get_clade_nodes <- function (x, y, z){ # give phylogroups, clusters,tree
     # get the mrca to annotate the tree with the cluster
     ##if (nrow(temp_df) > 2) { # use if want poppunk clusters with more than 2:
 
-    mrca_node <- getMRCA(z, rownames(temp_df))
+    mrca_node <- ape::getMRCA(z, rownames(temp_df))
     # if only one assembly in the poppunk cluster, then the MRCA will be NULL - so need to get this node:
     if (is.null(mrca_node)) {
       # get node and add to the to_rbind dataframe
-      mrca_node <- subset.data.frame(as_tibble(z), label == check_df$strain)$node
+      mrca_node <- subset.data.frame(tibble::as_tibble(z), label == check_df$strain)$node
     }
 
     to_rbind <- data.frame(mrca_node, c,this_phylogroup)
@@ -53,10 +54,10 @@ get_clade_nodes <- function (x, y, z){ # give phylogroups, clusters,tree
     #}
   }
 
-  ### now continue here - if needed
-  if (need_to_break == TRUE) {
-    next
-  }
+  # ### now continue here - if needed
+  # if (need_to_break == TRUE) {
+  #   continue
+  # }
 
   clade_labels <- cluster_nodes$node
   names(clade_labels) <- cluster_nodes$poppunk_cluster
@@ -66,7 +67,7 @@ get_clade_nodes <- function (x, y, z){ # give phylogroups, clusters,tree
 }
 
 
-add_clades_to_tree <- function(drawn_tree, clade_labels,highlight_clades,aligned,extend_to_value,highlight_alpha) {
+add_clades_to_tree <- function(drawn_tree, clade_labels,highlight_clades,aligned,extend_to_value,highlight_alpha,label_offset) {
 
   #1 - tree already drawn as ggtree object
   #2 - list of the internal nodes to be labelled / highlighted as clades , with the desired labels as names of the list / vector
@@ -83,7 +84,7 @@ add_clades_to_tree <- function(drawn_tree, clade_labels,highlight_clades,aligned
   ## loop though and add the clade labels:
   for (l in 1:length(clade_labels)) {
     temp_ggplot <- temp_ggplot +
-      geom_cladelabel(node=clade_labels[l], label=names(clade_labels)[l], offset = 0.001, align = aligned)
+      ggtree::geom_cladelabel(node=clade_labels[l], label=names(clade_labels)[l], offset = label_offset, align = aligned)
   }
 
   is.odd <- function(x) x %% 2 != 0
@@ -92,7 +93,7 @@ add_clades_to_tree <- function(drawn_tree, clade_labels,highlight_clades,aligned
   col_df <- temp_ggplot$data %>%
     right_join(data.frame(node = clade_labels)) %>%
     arrange(-y) %>%
-    mutate(color = unlist(map(seq_along(y), ~ ifelse(is.odd(.x),"#a9a9a9","#d9d9d9"))))
+    mutate(color = unlist(purrr::map(seq_along(y), ~ ifelse(is.odd(.x),"#a9a9a9","#d9d9d9"))))
 
 
   if (isTRUE(highlight_clades)) {
@@ -100,7 +101,7 @@ add_clades_to_tree <- function(drawn_tree, clade_labels,highlight_clades,aligned
     for (i in 1:nrow(col_df)) {
 
       temp_ggplot <- temp_ggplot +
-        geom_hilight(node=col_df[i,]$node, fill = col_df[i,]$color, extendto = max(temp_ggplot$data$x) + extend_to_value + 0.001 , alpha = highlight_alpha)
+        ggtree::geom_hilight(node=col_df[i,]$node, fill = col_df[i,]$color, extendto = max(temp_ggplot$data$x) + extend_to_value + 0.001 , alpha = highlight_alpha)
     }
   }
 

@@ -9,8 +9,8 @@ gggenes_df_from_gff_dir <- function(gff_dir) {
   for (file in gff_files) {
 
     #set the filename
-    filename = tail(unlist(str_split(file,"/")),1)
-    filename_prefix = tail(unlist(str_split(filename,"[.]gff")),2)[1]
+    filename = tail(unlist(stringr::str_split(file,"/")),1)
+    filename_prefix = tail(unlist(stringr::str_split(filename,"[.]gff")),2)[1]
 
     #system(glue("python2 ~/scripts/gff_to_gggenes.py {file} temp_gggenes_input.csv"))
 
@@ -21,15 +21,16 @@ gggenes_df_from_gff_dir <- function(gff_dir) {
     temp_df <- read.table(file = file,
                           sep = "\t",
                           comment.char = "",
-                          fill = TRUE) %>%
+                          fill = TRUE,
+                          quote = "") %>%
       rename(contig = V1,method = V2,type = V3, start = V4,end = V5,strand = V6 ,direction = V7 ,score = V8, details  = V9) %>%
       filter(details != "")  %>% # remove lines where there isn't a 9th column
       mutate(filename_prefix = filename_prefix) %>%
       filter(type == "CDS") %>% # only take CDSs
       # now - if there is ONE  "ID=" string within the details column, create variable "gene" and set as the string immediately after "ID=", but before the next ";". Otherwise set as NA.
-      mutate(gene = as.character(map(details, ~ ifelse(str_detect(.x, "ID=") & length(unlist(str_split(.x,"ID="))) == 2,  unlist(str_split(unlist(str_split(.x,"ID="))[2],";"))[1] , NA  )))) %>%
+      mutate(gene = as.character(purrr::map(details, ~ ifelse(stringr::str_detect(.x, "ID=") & length(unlist(stringr::str_split(.x,"ID="))) == 2,  unlist(stringr::str_split(unlist(stringr::str_split(.x,"ID="))[2],";"))[1] , NA  )))) %>%
       # put in number for gggenes:
-      rownames_to_column(var = "number") %>%
+      tibble::rownames_to_column(var = "number") %>%
       mutate(number = as.numeric(number)) %>%
       #set the direction and strands:
       mutate(direction = ifelse(direction == "+", 1, -1)) %>%

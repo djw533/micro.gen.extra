@@ -6,7 +6,7 @@ random_x_colours <- function(num,hex) {
   if (isTRUE(hex)) {
     hex_colours <- list()
     for (col in col_vector) {
-      hex_colours <- append(hex_colours,col2hex(col))
+      hex_colours <- append(hex_colours,gplots::col2hex(col))
       hex_colours <- as.character(hex_colours)
     }
     return(hex_colours)

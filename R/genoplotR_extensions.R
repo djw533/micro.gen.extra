@@ -24,6 +24,12 @@ create_dnaseqs <- function(gggenes_df,set_gene_fill_colours,gene_colours,gene_ra
 
   if (set_gene_fill_colours == T) {
 
+    #check for colour_variable in colnames:
+
+
+    if (!("colour_variable" %in% colnames(gggenes_w_cdhit_clusters))) { # check if there is a column for the colour variable
+      stop("Please have a column named 'colour_variable' in the 'gggenes_df' input")
+    }
 
     #now create random colours if this is selected
 
@@ -107,14 +113,14 @@ create_dnaseqs <- function(gggenes_df,set_gene_fill_colours,gene_colours,gene_ra
 
 
     write.table(file = paste0(gff_file,".tab"), dna_seqs[[gff_file]] , sep = "\t", quote = F, row.names = F)
-    dna_seq_objects[[gff_file]] <- read_dna_seg_from_tab(paste0(gff_file,".tab"), header = T)
+    dna_seq_objects[[gff_file]] <- genoPlotR::read_dna_seg_from_tab(paste0(gff_file,".tab"), header = T)
     ### fix colours - had to remove hash for it to easily readable:
     dna_seq_objects[[gff_file]]$fill <- paste('#',dna_seq_objects[[gff_file]]$fill, sep="")
     #fix NA:
     dna_seq_objects[[gff_file]]$fill <- gsub("#NA",NA,dna_seq_objects[[gff_file]]$fill)
     ### and fix the colours for the outline of the genes:
     #if the colour is set as black as a hex (i.e. 000000), then read_dna_seg_from_tab will read it in as just 0 - therefore there is no colour
-    dna_seq_objects[[gff_file]]$col <- map(dna_seq_objects[[gff_file]]$col, ~ ifelse(.x == 0, "000000", .x)) # therefore, if the colour is just 0, then change this to "000000"
+    dna_seq_objects[[gff_file]]$col <- purrr::map(dna_seq_objects[[gff_file]]$col, ~ ifelse(.x == 0, "000000", .x)) # therefore, if the colour is just 0, then change this to "000000"
     dna_seq_objects[[gff_file]]$col <- paste('#',dna_seq_objects[[gff_file]]$col, sep="") # then paste the hash back in
     dna_seq_objects[[gff_file]]$col <- gsub("#NA",NA,dna_seq_objects[[gff_file]]$col)
 
@@ -137,7 +143,7 @@ create_blast_comparisons <- function(blast_order,fasta_dir,blast_results_dir) {
 
   #make directory for blast_files
   if (dir.exists(blast_results_dir)) {
-    stop(glue("{blast_results_dir} is already a directory. Exiting."))
+    stop(glue::glue("{blast_results_dir} is already a directory. Exiting."))
   } else {
     dir.create(blast_results_dir)
   }
@@ -148,21 +154,21 @@ create_blast_comparisons <- function(blast_order,fasta_dir,blast_results_dir) {
     reference <- blast_order[i] #gsub(".gff","",clusters[[i]])
     query <- blast_order[i+1] #gsub(".gff","",clusters[[i+1]])
 
-    system(glue("makeblastdb -in {fasta_dir}/{query}.fasta -dbtype 'nucl' -title tmp_database -out tmp_database -parse_seqids"))
-    system(glue("blastn -task blastn -db tmp_database -perc_identity 20 -query {fasta_dir}/{reference}.fasta -evalue 10000 -outfmt 6 -out {blast_results_dir}/{query}_vs_{reference}"))
+    system(glue::glue("makeblastdb -in {fasta_dir}/{query}.fasta -dbtype 'nucl' -title tmp_database -out tmp_database -parse_seqids"))
+    system(glue::glue("blastn -task blastn -db tmp_database -perc_identity 20 -query {fasta_dir}/{reference}.fasta -evalue 10000 -outfmt 6 -out {blast_results_dir}/{query}_vs_{reference}"))
 
     #### see if getting rid of hashes works:
-    system(glue("sed -i 's/#/_/g' {blast_results_dir}/{query}_vs_{reference}"))
+    system(glue::glue("sed -i 's/#/_/g' {blast_results_dir}/{query}_vs_{reference}"))
 
     ### load comparison into genoplotR data
-    comparisons[[i]] <- try(read_comparison_from_blast(glue("{blast_results_dir}/{query}_vs_{reference}")))
+    comparisons[[i]] <- try(genoPlotR::read_comparison_from_blast(glue::glue("{blast_results_dir}/{query}_vs_{reference}")))
     comparisons[[i]] <- subset.data.frame(comparisons[[i]], aln_len > 100 & e_value < 10)
   }
 
 
   #6 plot?
   for ( i in seq(1,length(comparisons))) {
-    comparisons[[i]]$col <- apply_color_scheme(comparisons[[i]]$per_id,
+    comparisons[[i]]$col <- genoPlotR::apply_color_scheme(comparisons[[i]]$per_id,
                                                direction=comparisons[[i]]$direction,
                                                color_scheme="red_blue",
                                                rng=c(30,100))
@@ -186,7 +192,7 @@ plot_genoplotR_key <- function(color_scheme) {
   if (color_scheme %in% c("red_blue")) {
     invisible()
   } else {
-    stop(glue("{color_scheme} not in available color schemes Exiting."))
+    stop(glue::glue("{color_scheme} not in available color schemes Exiting."))
   }
 
 
@@ -194,11 +200,11 @@ plot_genoplotR_key <- function(color_scheme) {
 
   ##### make scales:
   colour_nums <- seq(30,100, by=1)
-  colours_act_forward <- apply_color_scheme(colour_nums,
+  colours_act_forward <- genoPlotR::apply_color_scheme(colour_nums,
                                             direction=1,
                                             color_scheme="red_blue",
                                             rng=c(30,100))
-  colours_act_reverse <- apply_color_scheme(colour_nums,
+  colours_act_reverse <- genoPlotR::apply_color_scheme(colour_nums,
                                             direction=-1,
                                             color_scheme="red_blue",
                                             rng=c(30,100))
