@@ -10,7 +10,7 @@
 #' @examples
 #' fasta_from_single_gff("input.gff")
 
-fasta_from_single_gff <- function(gff_file, fasta_dir, clean_up = TRUE) {
+fasta_from_single_gff <- function(gff_file, fasta_dir = ".", clean_up = TRUE) {
 
   ##first get directory name and the file name from the input string:
   gff_file_split <- unlist(stringr::str_split(gff_file,"/"))
@@ -29,7 +29,7 @@ fasta_from_single_gff <- function(gff_file, fasta_dir, clean_up = TRUE) {
   seqinr_data <- seqinr::read.fasta(file = glue::glue("{fasta_dir}/{filename}.fasta"),seqtype = "DNA", as.string = T)
 
   #check if singlefasta
-  if (length(seqinr_data > 1)) {
+  if (length(seqinr_data) > 1) {
     stop("GFF3 file must be of a single contig. Stopping.")
   }
 
@@ -70,11 +70,11 @@ fasta_from_gff_list <- function(gff_list,gff_names,fasta_dir = ".", clean_up = T
 
 
 
-  if (dir.exists(fasta_dir)) {
-    stop(glue::glue("{fasta_dir} already exists. Exiting."))
-  } else {
-    dir.create(fasta_dir)
-  }
+  # if (dir.exists(fasta_dir)) {
+  #   stop(glue::glue("{fasta_dir} already exists. Exiting."))
+  # } else {
+  #   dir.create(fasta_dir)
+  # }
 
   #iterate over the set of gff files
   output_fasta_list <- purrr::map(gff_list, ~ fasta_from_single_gff(.x, fasta_dir, clean_up))
@@ -99,7 +99,6 @@ fasta_from_gff_list <- function(gff_list,gff_names,fasta_dir = ".", clean_up = T
 #' @param end Integer of the end position of the feature to be translated in the fasta_sequence
 #' @param strand Orientation of the feature to be translated ("+", or "-")
 #'
-#'
 #' @return Protein sequence
 #' @examples
 #' protein_from_sequence(List of fasta_sequence, start, end, strand)
@@ -107,10 +106,6 @@ fasta_from_gff_list <- function(gff_list,gff_names,fasta_dir = ".", clean_up = T
 #' #Particularly useful if wanting to get all the protein sequences in one/several gff3 files for comparison, e.g. running CDhit:
 #'
 #' #E.g. Taking a bunch of gff files in a directory:
-#'
-#'
-#'
-#'
 
 protein_from_sequence <- function(fasta_sequence,start,end,strand) {
 

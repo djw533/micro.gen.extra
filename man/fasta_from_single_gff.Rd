@@ -4,7 +4,7 @@
 \alias{fasta_from_single_gff}
 \title{Get fasta sequence from single-contig gff3 file}
 \usage{
-fasta_from_single_gff(gff_file, fasta_dir, clean_up = TRUE)
+fasta_from_single_gff(gff_file, fasta_dir = ".", clean_up = TRUE)
 }
 \arguments{
 \item{gff_file}{Gff file}

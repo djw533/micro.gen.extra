@@ -28,8 +28,4 @@ protein_from_sequence(List of fasta_sequence, start, end, strand)
 #Particularly useful if wanting to get all the protein sequences in one/several gff3 files for comparison, e.g. running CDhit:
 
 #E.g. Taking a bunch of gff files in a directory:
-
-
-
-
 }
