@@ -1,3 +1,20 @@
+#' Get members (genes) of a set intersection shown in an UpsetR plot
+#'
+#' Given a list of groups in a set analysis plotted in UpsetR, get all members
+#' (i.e. Genes in this instance) in the intersection of those sets. Built to extract genes
+#' in a panaroo dataset.
+#'
+#' @param upset_df UpsetR dataframe (with the members column labelled as "Gene")
+#' @param groups List of the groups to get the intersection for
+#' @param exclusive TRUE/FALSE. If TRUE, only get the intersection of ONLY the groups in groups.
+#' If FALSE, return all values shared by the groups in groups, irrespective of whether those values
+#' are also in other groups. [Default = TRUE]
+#'
+#' @return List of all members in the intersection
+#' @examples
+#' get_intersect_members(dataframe_used_for_upsetR_plot, list_of_groups)
+
+
 get_intersect_members <- function (upset_df, groups, exclusive = TRUE){
 
 
@@ -39,6 +56,17 @@ get_intersect_members <- function (upset_df, groups, exclusive = TRUE){
 
 
 
+#' Plot gene accumulation curves
+#'
+#' Plot gene accumulation curves from a gene_presence_absence file from a pan-genome analysis
+#' using vegan and ggplot2
+#'
+#' @param gene_presence_absence_file gene_presence_absence.Rtab file from Roary or Panaroo
+#' @param groups Named vector with a list of lists of strains, with the name being each cluster / lineage / species etc.
+#'
+#' @return Plot of gene accumulation curves, and the dataframe used to plot these
+#' @examples
+#' plot_gene_accumulation_curves(gene_presence_absence.Rtab, list_of_groups)
 
 
 plot_gene_accumulation_curves <- function(gene_presence_absence_file,groups) {
@@ -134,6 +162,24 @@ plot_gene_accumulation_curves <- function(gene_presence_absence_file,groups) {
   return(df_phylogroups)
 
 }
+
+
+
+
+
+#' Create UpSetR dataframes from a gene_presence_absence.Rtab file
+#'
+#' Create UpSetR dataframes from a gene_presence_absence.Rtab file, with the different groups to create the
+#' sets being defined by clusters - e.g. phylogroups/lineages calculated by fastANI/PopPUNK/fastbaps etc
+#'
+#' @param gene_presence_absence_file gene_presence_absence.Rtab file from Roary or Panaroo
+#' @param groups Named vector with a list of lists of strains, with the name being each cluster / lineage / species etc.
+#' @param levels Levels to define the pan-genome [Default = c(0,0.15,0.95,1)]
+#' @param labels Labels for groups created between each of the values in levels. Should be of length : (length(levels) - 1).
+#' [Default = c("Cloud","Shell","Core")]
+#' @return UpsetR dataframe ready for plotting
+#' @examples
+#' create_upset_dfs(gene_presence_absence.Rtab, list_of_groups)
 
 create_upset_dfs <- function(gene_presence_absence_file,groups,levels = c(0,0.15,0.95,1), labels = c("Cloud","Shell","Core")) {
 

@@ -169,8 +169,6 @@ create_dnaseqs <- function(gggenes_df,set_gene_fill_colours = FALSE, gene_colour
 
 
 
-
-
 #' Create blast comparisons for synteny plots
 #'
 #' Create blast comparisons for synteny plots provided a list of fasta sequences,

@@ -1,3 +1,14 @@
+
+
+#' Run CDhit on a list of protein sequences
+#'
+#' Run CDhit on a list of protein sequences, then read in the output into an R dataframe
+#'
+#' @param protein_sequences Named vector. List comprised of protein sequences, names are the unique identifiers for the sequences.
+#' @return R dataframe of CDhit output
+#' @examples
+#' run_cdhit(list_of_protein_sequences)
+
 run_cdhit <- function(protein_sequences) {
 
   # protein_sequences = named list of protein sequences
