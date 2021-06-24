@@ -1,4 +1,27 @@
-random_x_colours <- function(num,hex) {
+
+#' Create a vector of "n" random colours
+#'
+#' Create a vector of "n" random colours using grDevices, output either hexadecimal/named colours
+#'
+#' @param num Number of colours to generate
+#' @param hex TRUE/FALSE for hexademical colours [Default = TRUE]
+#' @return A vector of colours, either hexadecimal or named colours
+#' @examples
+#' random_n_colours(10, TRUE)
+#' random_n_colours(num = 20, hex = FALSE)
+#'
+#' #Names can be set to vector afterwards (e.g. to create a named set of colours to pass to ggplot2, such as scale_fill_manual())
+#' #For example:
+#' colours_vector <- random_n_colours(3, TRUE) # first get a vector of three hex colours
+#' names(colours_vector) <- c("first_name","second_name","third_name") # then apply the names
+#'
+#' Example output:
+#'  first_name second_name  third_name
+#'   "#CDC9A5"   "#6959CD"   "#D2691E"
+
+
+
+random_n_colours <- function(num,hex = TRUE) {
   color = grDevices::colors()[grep('gr(a|e)y|white', grDevices::colors(), invert = T)]
   col_vector <- sample(color, num)
 
@@ -15,18 +38,3 @@ random_x_colours <- function(num,hex) {
   }
 }
 
-
-color.bar <- function(lut, min, max, axis_bool, alpha_num, ylab_string, title_string, nticks=8, ticks=seq(min, max, len=nticks)) {
-  scale = (length(lut)-1)/(max-min)
-  #dev.new(width=1.75, height=5)
-  if (axis_bool == T) {
-    plot(c(0,10), c(min,max), type='n', bty='n', xaxt='n', yaxt='n', xlab='', main = title_string, ylab=ylab_string)
-    axis(2, ticks, las=1)
-  } else {
-    plot(c(0,10), c(min,max), type='n', bty='n', xaxt='n', yaxt='n', xlab='', ylab='', main = title_string)
-  }
-  for (i in 1:(length(lut)-1)) {
-    y = (i-1)/scale + min
-    rect(0,y,10,y+1/scale, col=alpha(lut[i], alpha_num), border=NA)
-  }
-}

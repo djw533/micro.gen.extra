@@ -1,3 +1,20 @@
+#' Create a dataframe for input to gggenes from a directory of gff3 files
+#'
+#' Create a dataframe for input to gggenes from a directory of gff3 files
+#'
+#' @param gff_dir Directory containing gff3 files
+#'
+#' @return Dataframe with position, orientation and description of genomic features from gff files,
+#' in a format for plotting gene diagrams with gggenes, or further input into genoplotR dnaseqs formatting.
+#' @examples
+#' plot_genoplotR_key()
+#'
+#' plot_genoplotR_key(color_scheme_name = "red_blue")
+
+
+
+
+
 gggenes_df_from_gff_dir <- function(gff_dir) {
 
   gff_files <- list.files(path = gff_dir, full.names = T, pattern = ".gff")

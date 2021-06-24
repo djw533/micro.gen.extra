@@ -1,5 +1,20 @@
-get_clade_nodes <- function (x, y, z){ # give phylogroups, clusters,tree
+#' Find internal clade nodes ancestral to named/numbered sets of tip labels within a second layer of clustering (within a tree)
+#'
+#' For a tree object with an associated set of clustering (e.g. phylogroups defined by fastANI), and a finer set
+#' of clustering (e.g. multi-level clustering of bacterial genomes using fastbaps/PopPUNK), where all of the clusters
+#' in the latter clustering are sets entirely within the former clusters, retrieve the mrca for those sets of tips
+#' alongside the fastbaps/PopPUNK cluster number, as a named vector list.
+#'
+#' @param x Dataframe with two columns: "strain","phylogroup", where strain corresponds with tip-label
+#' @param y Dataframe with two columns: "strain", "Cluster", where strain corresponds with tip-label
+#' @param z Tree object, where the tip-labels correspond with "strain" in x and y
+#'
+#' @return Named vector list where the values are the internal node numbers, and the names are the cluster numbers.
+#'
+#' @examples
+#' get_within_species_cluster_mrcas(x = phylogroups_dataframe, y = clusters_dataframe, z = ggtree_object)
 
+get_within_species_cluster_mrcas <- function (x, y, z){ # give phylogroups, clusters,tree
 
   ### cycle through the clusters - get the mrca, then subtree out to put this information on the tree:
   ###make df for the nodes, with the labels as well
@@ -67,7 +82,74 @@ get_clade_nodes <- function (x, y, z){ # give phylogroups, clusters,tree
 }
 
 
-add_clades_to_tree <- function(drawn_tree, clade_labels,highlight_clades,aligned,extend_to_value,highlight_alpha,label_offset) {
+
+#' Find internal clade nodes ancestral to named/numbered sets of tip labels (within a tree)
+#'
+#' For a tree object with an associated set of clustering (e.g. phylogroups defined by fastANI, or clustering using
+#' fastbabs/PopPUNK), retrieve the mrca for those sets of tips alongside the fastbaps/PopPUNK cluster number,
+#' as a named vector list.
+#'
+#' @param tree Tree object, e.g. read in using ape::read.tree()
+#' @param clusters_df Dataframe with two columns: "strain", "cluster", where strain corresponds with tip-label
+#'
+#' @return Named vector list where the values are the internal node numbers, and the names are the cluster numbers.
+#'
+#' @examples
+#' get_clade_nodes(tree_object, clusters_dataframe)
+
+get_clade_nodes <- function(tree, clusters_df) {
+
+
+  #check the colnames are right:
+
+  if (isFALSE("strain" %in% colnames(clusters_df)) | isFALSE("cluster" %in% colnames(clusters_df))) {
+    stop(glue::glue('Please make sure that "strain" and "cluster" are colnames in clusters_df'))
+  }
+
+  #get the mrca nodes
+
+  clusters_vector <- clusters_df %>%
+    dplyr::group_by(cluster) %>%
+    dplyr::mutate(strain_concatenated = list(strain)) %>% # get lists of the tips for each cluster
+    dplyr::select(-strain) %>%
+    unique() %>% # remove duplicates after getting rid of the strain
+    dplyr::mutate(mrca_node = purrr::map(strain_concatenated, ~ ape::getMRCA(tree, .x))) %>% # get the mrca node from the list of tips in each cluster
+    pull(mrca_node, name = cluster) #pull out named vector
+
+
+  return(clusters_vector)
+
+}
+
+
+
+#' Highlight clades over a ggtree object given a named vector of internal nodes and labels to draw
+#'
+#' Given a named vector of internal tree nodes and labels (e.g. cluster number / name), move through each cluster name
+#' and apply geom_hilight and geom_cladelabel from ggtree onto the tree, with alternating shades of grey from top
+#' to bottom.
+#'
+#' @param drawn_tree ggtree object for labels to be added to
+#' @param clade_labels Named vector of internal node and label (as names), e.g. output from micro.gen.extra::get_clade_nodes()
+#' @param highlight_clades TRUE/FALSE as to whether to include the ggtree::geom_hilight [Default = TRUE]
+#' @param aligned TRUE/FALSE as to whether the ggtree::geom_hilights should align [Default = TRUE]
+#' @param extend_to_value Value to extend the ggtree::geom_hilight to. Float. [Default = 0.0]
+#' @param highlight_alpha Value to set the alpha of the ggtree::geom_hilight. Set between 0 and 1. [Default = 0.4]
+#' @param label_offset Value to offset the labels of the clade_labels. [Default = 0.0]
+#'
+#' @return ggtree object with clades (corresponding to the internal nodes supplied) have been highlighted and labelled.
+#'
+#' @examples
+#' add_clades_to_tree(ggtree_object, clade_labels_vector)
+
+
+add_clades_to_tree <- function(drawn_tree,
+                               clade_labels,
+                               highlight_clades = TRUE,
+                               aligned = TRUE,
+                               extend_to_value = 0.0,
+                               highlight_alpha = 0.4,
+                               label_offset = 0.0) {
 
   #1 - tree already drawn as ggtree object
   #2 - list of the internal nodes to be labelled / highlighted as clades , with the desired labels as names of the list / vector
@@ -128,6 +210,19 @@ add_clades_to_tree <- function(drawn_tree, clade_labels,highlight_clades,aligned
 }
 
 
+
+#' Prune a list of tips from a tree
+#'
+#' Given a list of tips, remove these from a tree object and return the pruned tree
+#'
+#' @param tree Tree object
+#' @param tips List of tips as present in tree
+#'
+#' @return Tree object with requested tips pruned out
+#'
+#' @examples
+#' remove_tips_from_tree(tree_object, list_of_tips)
+
 remove_tips_from_tree <- function(tree,tips) {
 
   require(ggtree)
@@ -143,7 +238,23 @@ remove_tips_from_tree <- function(tree,tips) {
 }
 
 
-collapse_tree <- function(tree,nodes,type,colours) { # provide list of nodes
+#' Collapse a set of nodes in a ggtree object
+#'
+#' Given a list of nodes, collapse these nodes in a ggtree object
+#'
+#' @param tree Tree object
+#' @param nodes List of internal nodes to collapse
+#' @param type Type of collapsing to run - "min", "max" or "mixed". [Default = "max"]
+#' @param colours List of hex colours to colour the collapsed cones, order of the colours corresponds
+#' with the list of nodes given [Default = "none"]
+#'
+#' @return Tree object with requested tips pruned out
+#'
+#' @examples
+#' remove_tips_from_tree(tree_object, list_of_tips)
+
+
+collapse_tree <- function(tree,nodes,type = "max",colours = "none") {
 
   temp_tree <- tree
 
@@ -151,7 +262,7 @@ collapse_tree <- function(tree,nodes,type,colours) { # provide list of nodes
     stop("Please provide either 'min', 'max', or 'mixed'")
   }
 
-  if ( isFALSE(colours)) {
+  if ( colours == "none") {
 
     for (l in 1:length(nodes)) {
       node_num = nodes[l]

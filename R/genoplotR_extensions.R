@@ -1,4 +1,35 @@
-create_dnaseqs <- function(gggenes_df,set_gene_fill_colours,gene_colours,gene_rarity,clean_up_files) {
+
+#' Create a dnaseqs list of dataframes for genoplotR
+#'
+#' Create a dnaseqs list of dataframes for genoplotR.
+#' Uses a gggenes dataframe outputted from micro.gen.extra::gggenes_df_from_gff_dir().
+#' Colours for genes can be set.
+#'
+#' @param gggenes_df dataframe created from micro.gen.extra::gggenes_df_from_gff_dir()
+#' @param set_gene_fill_colours TRUE/FALSE as to whether genes should be coloured. If TRUE, the variable name for the
+#' colour must be stored in a column called 'colour_variable' in the gggenes_df [Default = FALSE]
+#' @param gene_colours Provide a named vector of hexadecimal colours,
+#' where names correspond to the values in gggenes_df$colour_variable [Default = FALSE]
+#' @param gene_rarity Minimum gene frequency across entire dataframe required to colour the gene, provided as an integer
+#' (all genes lower than this frequency will be coloured white) [Default = 1]
+#' @param clean_up_files TRUE/FALSE as to whether intermediate working files are removed [Default = TRUE]
+#'
+#' @return A dnaseqs list of dataframes for genoplotR
+#' @examples
+#' #Basic:
+#' create_dnaseqs(input_gggenes_df)
+#'
+#' #More advanced:
+#' create_dnaseqs(input_gggenes_df, TRUE, provided_colours_vector, 5, FALSE)
+#'
+#' #This will create a dnaseqs list of dataframes where any genes found at least five times across the dataset
+#' #will be coloured according the colouring scheme set in "provided_colours_vector". Files created during the
+#' #process of the function will be kept.
+#'
+
+
+
+create_dnaseqs <- function(gggenes_df,set_gene_fill_colours = FALSE, gene_colours = "random", gene_rarity = 1,clean_up_files = TRUE) {
 
 
   # where :
@@ -33,11 +64,11 @@ create_dnaseqs <- function(gggenes_df,set_gene_fill_colours,gene_colours,gene_ra
 
     #now create random colours if this is selected
 
-    if (isFALSE(gene_colours) == F) {
+    if (gene_colours == "random") {
 
       gene_colours_df <- data.frame(table(as.character(gggenes_df$colour_variable))) %>%
         rename(colour_variable = Var1, occurence = Freq) %>%
-        mutate(colour = random_x_colours(length(colour_variable),T))%>%
+        mutate(colour = random_n_colours(length(colour_variable),T))%>%
         #now set all colours top grey if less than gene rarity:
         mutate(colour = ifelse(occurence < gene_rarity, "#BEBEBE", colour))
 
@@ -137,13 +168,41 @@ create_dnaseqs <- function(gggenes_df,set_gene_fill_colours,gene_colours,gene_ra
 }
 
 
-create_blast_comparisons <- function(blast_order,fasta_dir,blast_results_dir) {
+
+
+
+#' Create blast comparisons for synteny plots
+#'
+#' Create blast comparisons for synteny plots provided a list of fasta sequences,
+#' These can then be used as a readable format for genoplotR for synteny plots.
+#' The order of the fasta sequences will be the order of the genomic regions to be compared in the synteny plot
+#' from top to bottom.
+#' blastn and makeblastdb
+#'
+#' @param blast_order List of the fasta files to be compared, not including the ".fasta" extension.
+#' @param fasta_dir Directory where the fasta files are kept. If in the working directory, set this to "."
+#' @param blast_results_dir Directory to put the blast results into [Default = "blast_results"]
+#' @param overwrite TRUE/FALSE to overwrite a previously existing blast_results_dir [Default = FALSE]
+#' @param color_scheme_name color scheme to be used for the genoplotR comparison [Default = "red_blue"]
+#'
+#' @return a dna_comparisons list for genoplotR in addition to a directory with blast comparisons for a list of fasta sequences.
+#' Comparisons will be sequential. e.g. sequence_1 vs sequence_2, sequence_2 vs sequence_3, sequence_3 vs sequence_4
+#'
+#' @examples
+#' create_blast_comparisons(blast_order_list, "dir_with_fasta_files")
+
+
+create_blast_comparisons <- function(blast_order,fasta_dir,blast_results_dir = "blast_results", overwrite = FALSE, color_scheme_name = "red_blue") {
 
   comparisons <- list() # empty list for comparisons
 
   #make directory for blast_files
   if (dir.exists(blast_results_dir)) {
-    stop(glue::glue("{blast_results_dir} is already a directory. Exiting."))
+    if (isTRUE(overwrite)) {
+      unlink(blast_results_dir)
+    } else {
+      stop(glue::glue("{blast_results_dir} is already a directory. Exiting."))
+    }
   } else {
     dir.create(blast_results_dir)
   }
@@ -170,7 +229,7 @@ create_blast_comparisons <- function(blast_order,fasta_dir,blast_results_dir) {
   for ( i in seq(1,length(comparisons))) {
     comparisons[[i]]$col <- genoPlotR::apply_color_scheme(comparisons[[i]]$per_id,
                                                direction=comparisons[[i]]$direction,
-                                               color_scheme="red_blue",
+                                               color_scheme=color_scheme_name,
                                                rng=c(30,100))
   }
 
@@ -186,13 +245,47 @@ create_blast_comparisons <- function(blast_order,fasta_dir,blast_results_dir) {
 }
 
 
+#' Plot the key for a genoplotR synteny plot
+#'
+#' Plot the key for a genoplotR synteny plot, output as svg for both forward and reverse blast hits.
+#' Currently only a red/blue color scheme available
+#'
+#' @param color_scheme_name Colour scheme to be used. [Default = "red_blue"]
+#'
+#' @return Svg plots with individual keys for forward and reverse blast hits
+#' @examples
+#' plot_genoplotR_key()
+#'
+#' plot_genoplotR_key(color_scheme_name = "red_blue")
 
-plot_genoplotR_key <- function(color_scheme) {
+plot_genoplotR_key <- function(color_scheme_name = "red_blue") {
 
-  if (color_scheme %in% c("red_blue")) {
+
+
+
+  #first need to add the color.bar function
+  color.bar <- function(lut, min, max, axis_bool, alpha_num, ylab_string, title_string, nticks=8, ticks=seq(min, max, len=nticks)) {
+    scale = (length(lut)-1)/(max-min)
+    #dev.new(width=1.75, height=5)
+    if (axis_bool == T) {
+      plot(c(0,10), c(min,max), type='n', bty='n', xaxt='n', yaxt='n', xlab='', main = title_string, ylab=ylab_string)
+      axis(2, ticks, las=1)
+    } else {
+      plot(c(0,10), c(min,max), type='n', bty='n', xaxt='n', yaxt='n', xlab='', ylab='', main = title_string)
+    }
+    for (i in 1:(length(lut)-1)) {
+      y = (i-1)/scale + min
+      rect(0,y,10,y+1/scale, col=alpha(lut[i], alpha_num), border=NA)
+    }
+  }
+
+
+
+
+  if (color_scheme_name %in% c("red_blue")) {
     invisible()
   } else {
-    stop(glue::glue("{color_scheme} not in available color schemes Exiting."))
+    stop(glue::glue("{color_scheme_name} not in available color schemes Exiting."))
   }
 
 
@@ -225,6 +318,39 @@ plot_genoplotR_key <- function(color_scheme) {
 
 
 }
+
+
+#' Plot a genoplotR synteny plot
+#'
+#' Plot a genoplotR synteny plot, using the dnaseqs from micro_gen_extra::create_dnaseqs()
+#' and the blast comparisons from micro_gen_extra::create_blast_comparisons()
+#'
+#'
+#' @param input_genoplotR_set Input list of the dna_seqs and the blast comparisons
+#' @param output_prefix Prefix for the output files (svg and png)
+#'
+#' @return A png and svg file of synteny plots produced using genoplotR
+#' @examples
+#' plot_genoplot_data(input_genoplotR_data, "output_prefix_name")
+#'
+#' More specifically:
+#'
+#' #First create an empty list
+#' genoplotr_data <- list()
+#'
+#' #Add the dnaseqs:
+#' genoplotr_data$dnaseqs <- micro_gen_extra::create_dnaseqs(input_gggenes_df)
+#'
+#' #Then add the blast comparisons:
+#' genoplotr_data$comparisons <- micro_gen_extra::create_blast_comparisons(blast_order_list, "dir_with_fasta_files")
+#'
+#' #Then plot:
+#' plot_genoplot_data(genoplotr_data, "output_prefix_name")
+#'
+#' #To add colours, and change blast parameters (to be added), see the documentation for micro_gen_extra::create_dnaseqs
+#' #and micro_gen_extra::create_blast_comparisons
+
+
 
 
 plot_genoplot_data <- function(input_genoplotR_set,output_prefix) {

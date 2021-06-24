@@ -27,3 +27,4 @@ Imports:
   genoPlotR,
   vegan,
   UpSetR
+RoxygenNote: 7.1.1
