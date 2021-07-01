@@ -38,3 +38,25 @@ random_n_colours <- function(num,hex = TRUE) {
   }
 }
 
+#' Hexcode colours (from Glimma v1-hexcol.R)
+#'
+#' Check if string(s) are valid hex colour representation
+#'
+#' @param x the colour value(s) to check.
+#' @param hash TRUE/FALSE - check for leading hash [Default = TRUE]
+#'
+#' @return Logical vector indicating if strings(s) are valid hex representations
+
+is.hex <- function(x,hash = TRUE) {
+
+  if (isTRUE(hash)) {
+    isHex <- grepl("^#[[:xdigit:]]{6}$", x)
+    isHexWithAlpha <- grepl("^#[[:xdigit:]]{8}$", x)
+  } else {
+    isHex <- grepl("^[[:xdigit:]]{6}$", x)
+    isHexWithAlpha <- grepl("^[[:xdigit:]]{8}$", x)
+  }
+
+  return(isHex | isHexWithAlpha)
+}
+

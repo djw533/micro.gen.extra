@@ -285,6 +285,64 @@ collapse_tree <- function(tree,nodes,type = "max",colours = "none") {
 
 
 
+#' Put a multi-column gheatmap onto a ggtree object with gaps between columns
+#'
+#' Put a multi-column gheatmap onto a ggtree object with gaps between columns
+#'
+#' @param ggtree_object Tree object
+#' @param gheatmap_df Dataframe to be put along tree as gheatmap. Rownames should correspond with the tip labels in the tree.
+#' @param col_width Column width for each column in the heatmap [Default = 1/5 width of the tree]
+#' @param offset_num Initial offset from the tree [Default = 0]
+#' @param gap Gap between each column [Default = 1/10 of value of column width]
+#'
+#' @return Tree object with gheatmap added, with the gaps
+#'
+#' @examples
+#' remove_tips_from_tree(tree_object, list_of_tips)
+
+
+gheatmap_with_gaps <- function(ggtree_object,
+                               gheatmap_df,
+                               col_width = max(ggtree_object$data$x)/5,
+                               offset_num = 0,
+                               gap = col_width / 10) {
+
+  iteration <- 0
+  temp_plot <- ggtree_object
+
+  #check the rownames are all in the tree:
+
+  if ( isFALSE(all(rownames(gheatmap_df) %in% subset(ggtree_object$data, isTip == TRUE)$label)) ) {
+    stop("All rownames in the gheatmap should be tips in the ggtree object. Stopping")
+  }
+
+
+  for (i in colnames(gheatmap_df)) {
+
+    if (iteration == 0) {
+      offset_num <- 0
+    }
+
+    iteration = iteration + 1
+
+    temp_data <- gheatmap_df %>%
+      select(i)
+
+    temp_plot <- temp_plot %>% ggtree::gheatmap(temp_data,
+                                                colnames_position = "top", colnames_offset_y = 15,
+                                                color = NULL,
+                                                width = col_width,
+                                                offset = offset_num) +
+      #scale_fill_manual(values = c(fill_colours)) +
+      ylim(0,max(temp_plot$data$y) + 20)
+
+
+    offset_num <- (iteration * (max(temp_plot$data$x) * col_width)) + (gap * iteration)
+
+  }
+
+  return(temp_plot)
+}
 
 
 
