@@ -26,5 +26,7 @@ Imports:
   seqinr,
   genoPlotR,
   vegan,
-  UpSetR
+  UpSetR,
+  tools,
+  cowplot
 RoxygenNote: 7.1.1

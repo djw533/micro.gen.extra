@@ -27,10 +27,10 @@ More specifically:
 genoplotr_data <- list()
 
 #Add the dnaseqs:
-genoplotr_data$dnaseqs <- micro_gen_extra::create_dnaseqs(input_gggenes_df)
+genoplotr_data$dnaseqs <- micro.gen.extra::create_dnaseqs(input_gggenes_df)
 
 #Then add the blast comparisons:
-genoplotr_data$comparisons <- micro_gen_extra::create_blast_comparisons(blast_order_list, "dir_with_fasta_files")
+genoplotr_data$comparisons <- micro.gen.extra::create_blast_comparisons(blast_order_list, "dir_with_fasta_files")
 
 #Then plot:
 plot_genoplot_data(genoplotr_data, "output_prefix_name")

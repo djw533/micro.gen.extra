@@ -36,12 +36,12 @@ run_cdhit <- function(protein_sequences) {
   ## now read the output in:
   cdhit_clusters_output <- read.csv("cdhit_output.clstr", sep = "\t", row.names = NULL, header = FALSE, stringsAsFactors = FALSE) %>%
     #set names:
-    rename(cluster = V1, gene = V2) %>%
+    rename(cdhit_cluster = V1, gene = V2) %>%
     #remove cluster col values if it's not a cluster (i.e. doesn't start with '>') :
-    mutate(cluster = ifelse(stringr::str_starts(cluster,">") == TRUE, cluster, NA),
-           cluster = gsub(">Cluster ","",cluster)) %>%
+    mutate(cdhit_cluster = ifelse(stringr::str_starts(cdhit_cluster,">") == TRUE, cdhit_cluster, NA),
+           cdhit_cluster = gsub(">Cluster ","",cdhit_cluster)) %>%
     #now fill in the data downwards:
-    tidyr::fill(cluster, .direction = "down") %>%
+    tidyr::fill(cdhit_cluster, .direction = "down") %>%
     #now remove rows with empty values in "gene"
     filter(gene != "") %>%
     #now reformat the gene column:

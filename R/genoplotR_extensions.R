@@ -45,10 +45,6 @@ create_dnaseqs <- function(gggenes_df,set_gene_fill_colours = FALSE, gene_colour
   #   shared across all gene clusters, then very rare genes won't be highlighted. (The effect from this will probably also be accentuated if
   #   creating a synteny plot, as this gene will likely not be shared with gene clusters above and below).
 
-  # gggenes_df = gggenes_w_cdhit_clusters
-  # clustered_genes = TRUE
-  # gene_rarity = 5
-  #
 
 
   ##set some fills if requested:
@@ -58,7 +54,7 @@ create_dnaseqs <- function(gggenes_df,set_gene_fill_colours = FALSE, gene_colour
     #check for colour_variable in colnames:
 
 
-    if (!("colour_variable" %in% colnames(gggenes_w_cdhit_clusters))) { # check if there is a column for the colour variable
+    if (!("colour_variable" %in% colnames(gggenes_df))) { # check if there is a column for the colour variable
       stop("Please have a column named 'colour_variable' in the 'gggenes_df' input")
     }
 
@@ -94,8 +90,8 @@ create_dnaseqs <- function(gggenes_df,set_gene_fill_colours = FALSE, gene_colour
 
   all_gggenes_data <- list()
 
-  for (gff_file in unique(gggenes_df$gff_filename)) {
-    temp_df <- subset.data.frame(gggenes_df, gff_filename == gff_file)
+  for (gff_file in unique(gggenes_df$filename_prefix)) {
+    temp_df <- subset.data.frame(gggenes_df, filename_prefix == gff_file)
 
 
     all_gggenes_data[[gff_file]] <- temp_df
@@ -111,7 +107,7 @@ create_dnaseqs <- function(gggenes_df,set_gene_fill_colours = FALSE, gene_colour
     #gff_file <- gsub(".gff","",as.character(clusters[i])) #  changing this below so that it is the cluster number!:
     value <- all_gggenes_data[[i]]
     ##get the filename of the gff in question:
-    gff_file <- as.character(unique(value$gff_filename))
+    gff_file <- as.character(unique(value$filename_prefix))
     ##put data into the dnaseqs list of dfs
     dna_seqs[[gff_file]] <- data.frame(matrix(ncol = 18, nrow = nrow(value)))
     colnames(dna_seqs[[gff_file]]) <- c("name","start","end","strand","length","pid","gene","synonym","product","proteinid","feature","gene_type","col","fill","lty","lwd","pch","cex")
@@ -146,13 +142,18 @@ create_dnaseqs <- function(gggenes_df,set_gene_fill_colours = FALSE, gene_colour
     write.table(file = paste0(gff_file,".tab"), dna_seqs[[gff_file]] , sep = "\t", quote = F, row.names = F)
     dna_seq_objects[[gff_file]] <- genoPlotR::read_dna_seg_from_tab(paste0(gff_file,".tab"), header = T)
     ### fix colours - had to remove hash for it to easily readable:
-    dna_seq_objects[[gff_file]]$fill <- paste('#',dna_seq_objects[[gff_file]]$fill, sep="")
+
+    #check that the colour is hex, if so - add a hash back onto the front of the hex number, otherwise leave as the string, e.g. "red", "blue", "pink" etc
+    dna_seq_objects[[gff_file]]$fill <- purrr::map(dna_seq_objects[[gff_file]]$fill, ~ ifelse(is.hex(.x, hash = FALSE), paste('#', .x , sep=""), .x))
+
     #fix NA:
     dna_seq_objects[[gff_file]]$fill <- gsub("#NA",NA,dna_seq_objects[[gff_file]]$fill)
     ### and fix the colours for the outline of the genes:
     #if the colour is set as black as a hex (i.e. 000000), then read_dna_seg_from_tab will read it in as just 0 - therefore there is no colour
     dna_seq_objects[[gff_file]]$col <- purrr::map(dna_seq_objects[[gff_file]]$col, ~ ifelse(.x == 0, "000000", .x)) # therefore, if the colour is just 0, then change this to "000000"
-    dna_seq_objects[[gff_file]]$col <- paste('#',dna_seq_objects[[gff_file]]$col, sep="") # then paste the hash back in
+    #check that the colour is hex, if so - add a hash back onto the front of the hex number, otherwise leave as the string, e.g. "red", "blue", "pink" etc
+    dna_seq_objects[[gff_file]]$col <- purrr::map(dna_seq_objects[[gff_file]]$col, ~ ifelse(is.hex(.x, hash = FALSE), paste('#', .x , sep=""), .x))
+
     dna_seq_objects[[gff_file]]$col <- gsub("#NA",NA,dna_seq_objects[[gff_file]]$col)
 
     #clean up if requested:
@@ -337,10 +338,10 @@ plot_genoplotR_key <- function(color_scheme_name = "red_blue") {
 #' genoplotr_data <- list()
 #'
 #' #Add the dnaseqs:
-#' genoplotr_data$dnaseqs <- micro_gen_extra::create_dnaseqs(input_gggenes_df)
+#' genoplotr_data$dnaseqs <- micro.gen.extra::create_dnaseqs(input_gggenes_df)
 #'
 #' #Then add the blast comparisons:
-#' genoplotr_data$comparisons <- micro_gen_extra::create_blast_comparisons(blast_order_list, "dir_with_fasta_files")
+#' genoplotr_data$comparisons <- micro.gen.extra::create_blast_comparisons(blast_order_list, "dir_with_fasta_files")
 #'
 #' #Then plot:
 #' plot_genoplot_data(genoplotr_data, "output_prefix_name")
@@ -354,7 +355,7 @@ plot_genoplotR_key <- function(color_scheme_name = "red_blue") {
 plot_genoplot_data <- function(input_genoplotR_set,output_prefix) {
 
   max_length <- 0
-  for (c in genoplotr_data$dna_seqs) {
+  for (c in input_genoplotR_set$dna_seqs) {
     if (max(c$end) > max_length) {
       max_length <- max(c$end)
     }
@@ -363,7 +364,7 @@ plot_genoplot_data <- function(input_genoplotR_set,output_prefix) {
 
   #set the heights
 
-  num_comparisons <- length(genoplotr_data$dna_seqs)
+  num_comparisons <- length(input_genoplotR_set$dna_seqs)
 
   output_width <- (max_length / 10000 ) * 3
 
@@ -372,7 +373,7 @@ plot_genoplot_data <- function(input_genoplotR_set,output_prefix) {
   #output <- "test_output"
 
   png(glue("{output_prefix}.png"), res = 300, units = "in", width = output_width, height = output_height,pointsize = 8)
-  plot_gene_map(input_genoplotR_set$dna_seqs, input_genoplotR_set$comparisons,
+  genoPlotR::plot_gene_map(input_genoplotR_set$dna_seqs, input_genoplotR_set$comparisons,
                 scale=T,
                 legend = T,
                 arrow_head_len = 400,
@@ -380,7 +381,7 @@ plot_genoplot_data <- function(input_genoplotR_set,output_prefix) {
   dev.off()
 
   svg(glue("{output_prefix}.svg"), width = output_width, height = output_height,pointsize = 8)
-  plot_gene_map(input_genoplotR_set$dna_seqs, input_genoplotR_set$comparisons,
+  genoPlotR::plot_gene_map(input_genoplotR_set$dna_seqs, input_genoplotR_set$comparisons,
                 scale=T,
                 legend = T,
                 arrow_head_len = 400,

@@ -12,6 +12,9 @@
 
 fasta_from_single_gff <- function(gff_file, fasta_dir = ".", clean_up = TRUE) {
 
+  #remove extension from filename:
+  gff_file <- tools::file_path_sans_ext(gff_file)
+
   ##first get directory name and the file name from the input string:
   gff_file_split <- unlist(stringr::str_split(gff_file,"/"))
 
@@ -22,7 +25,7 @@ fasta_from_single_gff <- function(gff_file, fasta_dir = ".", clean_up = TRUE) {
   }
 
   # find "##FASTA" in gff, then tail to the end of the file from this
-  system(glue::glue("tail -n +$( expr $(grep -n '##FASTA' {directory}/{filename} | cut -d ':' -f 1) + 1) {directory}/{filename} > {fasta_dir}/{filename}.fasta"))
+  system(glue::glue("tail -n +$( expr $(grep -n '##FASTA' {directory}/{filename}.gff | cut -d ':' -f 1) + 1) {directory}/{filename}.gff > {fasta_dir}/{filename}.fasta"))
 
 
   #read using seqinr
