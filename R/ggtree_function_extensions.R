@@ -106,14 +106,20 @@ get_clade_nodes <- function(tree, clusters_df) {
     stop(glue::glue('Please make sure that "strain" and "cluster" are colnames in clusters_df'))
   }
 
-  #get the mrca nodes
 
+
+  #ggtree object to extract out nodes for clusters that are singletons :
+  tree_df <- ggtree::ggtree(tree)$data
+
+
+  #get the mrca nodes
   clusters_vector <- clusters_df %>%
     dplyr::group_by(cluster) %>%
     dplyr::mutate(strain_concatenated = list(strain)) %>% # get lists of the tips for each cluster
     dplyr::select(-strain) %>%
     unique() %>% # remove duplicates after getting rid of the strain
-    dplyr::mutate(mrca_node = purrr::map(strain_concatenated, ~ ape::getMRCA(tree, .x))) %>% # get the mrca node from the list of tips in each cluster
+    #dplyr::mutate(mrca_node = purrr::map(strain_concatenated, ~ ape::getMRCA(tree, .x))) %>% # get the mrca node from the list of tips in each cluster
+    dplyr::mutate(mrca_node = purrr::map(strain_concatenated, ~ ifelse(length(.x) > 1, ape::getMRCA(tree, .x), tree_df %>% filter(label == .x, isTip == T) %>% pull(node) ))) %>% # get the mrca node from the list of tips in each cluster
     pull(mrca_node, name = cluster) #pull out named vector
 
 
@@ -173,7 +179,7 @@ add_clades_to_tree <- function(drawn_tree,
 
   #arrange the clade highlighting from top of plot to lower , i.e. from high to low for y values for the nodes in clade_labels:
   col_df <- temp_ggplot$data %>%
-    right_join(data.frame(node = clade_labels)) %>%
+    right_join(data.frame(node = unlist(clade_labels))) %>%
     arrange(-y) %>%
     mutate(color = unlist(purrr::map(seq_along(y), ~ ifelse(is.odd(.x),"#a9a9a9","#d9d9d9"))))
 

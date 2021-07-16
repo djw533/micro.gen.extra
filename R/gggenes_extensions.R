@@ -29,17 +29,18 @@ gggenes_df_from_gff_dir <- function(gff_dir) {
     filename = tail(unlist(stringr::str_split(file,"/")),1)
     filename_prefix = tail(unlist(stringr::str_split(filename,"[.]gff")),2)[1]
 
-    #system(glue("python2 ~/scripts/gff_to_gggenes.py {file} temp_gggenes_input.csv"))
+    #replace any hashes in the name with an underscore and write a temporary file:
+    changed_filename <- gsub("#","_",filename)
 
-    #now read in this file;
-    #temp_df_2 <- read.csv("temp_gggenes_input.csv")
+    system(glue::glue("sed 's/{filename}/{changed_filename}/g' {file} > temp_file.gff"))
 
     #read in the gff file and coerce into a format gggenes likes
-    temp_df <- read.table(file = file,
+    temp_df <- read.table(file = "temp_file.gff",
                           sep = "\t",
-                          comment.char = "",
+                          comment.char = "#",
                           fill = TRUE,
-                          quote = "") %>%
+                          quote = "",
+                          header = F) %>%
       rename(contig = V1,method = V2,type = V3, start = V4,end = V5,strand = V6 ,direction = V7 ,score = V8, details  = V9) %>%
       filter(details != "")  %>% # remove lines where there isn't a 9th column
       mutate(filename_prefix = filename_prefix) %>%
@@ -60,7 +61,7 @@ gggenes_df_from_gff_dir <- function(gff_dir) {
 
   }
 
-  #file.remove("temp_gggenes_input.csv")
+  file.remove("temp_file.gff")
 
 
   return(gggenes_df)

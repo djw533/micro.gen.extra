@@ -173,7 +173,7 @@ plot_gene_accumulation_curves <- function(gene_presence_absence_file,groups) {
 #' sets being defined by clusters - e.g. phylogroups/lineages calculated by fastANI/PopPUNK/fastbaps etc
 #'
 #' @param gene_presence_absence_file gene_presence_absence.Rtab file from Roary or Panaroo
-#' @param groups Named vector with a list of lists of strains, with the name being each cluster / lineage / species etc.
+#' @param groups Dataframe of the groups with two columns, one named "strain" listing strain names, and the other named "group" listing the group/lineage etc that each strain belongs to
 #' @param levels Levels to define the pan-genome [Default = c(0,0.15,0.95,1)]
 #' @param labels Labels for groups created between each of the values in levels. Should be of length : (length(levels) - 1).
 #' [Default = c("Cloud","Shell","Core")]
