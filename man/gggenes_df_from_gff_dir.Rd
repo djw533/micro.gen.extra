@@ -17,7 +17,5 @@ in a format for plotting gene diagrams with gggenes, or further input into genop
 Create a dataframe for input to gggenes from a directory of gff3 files
 }
 \examples{
-plot_genoplotR_key()
-
-plot_genoplotR_key(color_scheme_name = "red_blue")
+gggenes_df_from_gff_dir("path/to/gff/directory")
 }
