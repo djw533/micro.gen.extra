@@ -23,7 +23,8 @@
 
 # Install dependencies
 
-```install.packages(c("dplyr", "ggplot2", "stringr", "gplots", "RColorBrewer", "ape", "castor", "purrr", "glue", "tibble", "seqinr","genoplotR","vegan", "UpSetR", "cowplot"))
+```R
+install.packages(c("dplyr", "ggplot2", "stringr", "gplots", "RColorBrewer", "ape", "castor", "purrr", "glue", "tibble", "seqinr","genoplotR","vegan", "UpSetR", "cowplot"))
 
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
