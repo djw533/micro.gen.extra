@@ -290,4 +290,52 @@ create_upset_dfs <- function(gene_presence_absence_file,groups,levels = c(0,0.15
 }
 
 
+plot_intersection_on_tree <- function(ggtree_object, intersection_members, upset_df, eggnog_annotation, pangenome_df_transposed, exclusive_int = TRUE, change_names = FALSE) {
+
+
+  if (isTRUE(change_names)) {
+    ##create annotation names
+    annotation_names <- eggnog_annotation %>%
+      filter(! "#" %in% Gene) %>%
+      full_join(upset_df %>% select(Gene)) %>%
+      mutate(heatmap_name = ifelse(is.na(desc), Gene, desc)) %>%
+      #now arrange by the heatmap name - and add suffixes if the name is duplicated
+      arrange(heatmap_name) %>%
+      mutate(to_del = 1) %>%
+      group_by(heatmap_name) %>%
+      mutate(csum=cumsum(to_del)) %>%
+      mutate(csum = ifelse(csum  == 1, "", paste0("_",csum,sep=""))) %>%
+      mutate(heatmap_name2 = paste0(heatmap_name,csum, sep = "")) %>%
+      pull(heatmap_name2, name = Gene)
+
+  }
+
+  # extract stuff
+  intersection <- micro.gen.extra::get_intersect_members(upset_df = upset_df,  intersection_members, exclusive = exclusive_int)
+
+  intersection_gheatmap <- pangenome_df_transposed %>%
+    select(all_of(intersection))
+
+  if (isTRUE(change_names)) {
+    colnames(intersection_gheatmap) <- unname(annotation_names[c(colnames(intersection_gheatmap))])
+  }
+
+  #plot:
+  ggtree_object %>% ggtree::gheatmap(intersection_gheatmap, color = NULL,
+                                     colnames_position = "top",
+                                     colnames_angle = 45,
+                                     colnames_offset_y = 5,
+                                     hjust = 0,
+                                     width = 3,
+                                     offset = 0.1) +
+    scale_fill_gradient(low = "white", high = "blue") +
+    theme(legend.position = "none",
+          text = element_text(size = 2)) +
+    ylim(0,max(t2$data$y)+150)
+
+  return(intersection_gheatmap)
+
+}
+
+
 

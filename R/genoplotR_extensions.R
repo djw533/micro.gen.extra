@@ -372,7 +372,7 @@ plot_genoplot_data <- function(input_genoplotR_set,output_prefix) {
 
   #output <- "test_output"
 
-  png(glue("{output_prefix}.png"), res = 300, units = "in", width = output_width, height = output_height,pointsize = 8)
+  png(glue::glue("{output_prefix}.png"), res = 300, units = "in", width = output_width, height = output_height,pointsize = 8)
   genoPlotR::plot_gene_map(input_genoplotR_set$dna_seqs, input_genoplotR_set$comparisons,
                 scale=T,
                 legend = T,
@@ -380,7 +380,7 @@ plot_genoplot_data <- function(input_genoplotR_set,output_prefix) {
                 annotation_height = 0.5)
   dev.off()
 
-  svg(glue("{output_prefix}.svg"), width = output_width, height = output_height,pointsize = 8)
+  svg(glue::glue("{output_prefix}.svg"), width = output_width, height = output_height,pointsize = 8)
   genoPlotR::plot_gene_map(input_genoplotR_set$dna_seqs, input_genoplotR_set$comparisons,
                 scale=T,
                 legend = T,
