@@ -39,5 +39,5 @@ BiocManager::install(c("ggtree"))
 ```R
 install.packages("devtools")
 library(devtools)
-install_github("djw533/micr.gen.extra")
+install_github("djw533/micro.gen.extra")
 ```
