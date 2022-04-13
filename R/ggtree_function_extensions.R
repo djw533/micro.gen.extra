@@ -231,12 +231,12 @@ add_clades_to_tree <- function(drawn_tree,
 
 remove_tips_from_tree <- function(tree,tips) {
 
-  require(ggtree)
+  require(ape)
 
   temp_tree <- tree
 
   for (tipname in tips) {
-    temp_tree <- drop.tip(temp_tree, tipname)
+    temp_tree <- ape::drop.tip(temp_tree, tipname)
   }
 
   return(temp_tree)

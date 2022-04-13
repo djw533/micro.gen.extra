@@ -60,7 +60,7 @@ create_dnaseqs <- function(gggenes_df,set_gene_fill_colours = FALSE, gene_colour
 
     #now create random colours if this is selected
 
-    if (gene_colours == "random") {
+    if (gene_colours[1] == "random") {
 
       gene_colours_df <- data.frame(table(as.character(gggenes_df$colour_variable))) %>%
         rename(colour_variable = Var1, occurence = Freq) %>%
@@ -390,3 +390,62 @@ plot_genoplot_data <- function(input_genoplotR_set,output_prefix) {
 }
 
 
+#' Take a list of "x" gff3 files and create a synteny plot
+#'
+#' Take gff files, read annotation and extract fasta sequence.
+#' Then create genoplotR data structures, then plot genoplotR synteny plot.
+#' This uses the dnaseqs from micro_gen_extra::create_dnaseqs()
+#' and the blast comparisons from micro_gen_extra::create_blast_comparisons()
+#'
+#'
+#' @param gff_list Input list of gff files (with extensions to paths)
+#' @param output_prefix Prefix for the output files (svg and png)
+#' @param temp_dir Directory to put fasta files into [Default = "temp_fasta"]
+#' @param clean_up TRUE/FALSE - clean up the temp fasta directory [Default = TRUE]
+#'
+#' @return A png and svg file of synteny plots produced using genoplotR
+#' @examples
+#' Insert examples here
+
+
+
+
+plot_synteny_gff_files <- function(gff_list,output_prefix = "synteny_plot", temp_dir = "temp_fasta", clean_up = TRUE) {
+
+
+  names(gff_list) <- unlist(purrr::map(gff_list, ~ tail(unlist(stringr::str_split(.x,"/")),1)))
+
+
+  gggenes_df <- micro.gen.extra::gggenes_df_from_gff_list(gff_list = gff_list)
+
+
+  genoplotR_data <- list()
+
+  #now get the dna_seqs from the gggenes dataframe
+  genoplotR_data$dna_seqs <- micro.gen.extra::create_dnaseqs(gggenes_df,set_gene_fill_colours = FALSE)
+
+  micro.gen.extra::fasta_from_gff_list(gff_list = gff_list,
+                                       gff_names = names(gff_list),
+                                       fasta_dir = temp_dir,
+                                       clean_up = FALSE)
+
+  #run the blast comparisons and read them for genoplotR
+  genoplotR_data$comparisons <- micro.gen.extra::create_blast_comparisons(names(genoplotR_data$dna_seqs), temp_dir,overwrite = TRUE)
+
+  svg("synteny_selected.svg",width = 15, height = 30)
+  genoPlotR::plot_gene_map(genoplotR_data$dna_seqs, genoplotR_data$comparisons,
+                           scale=T,
+                           legend = T,
+                           arrow_head_len = 400,
+                           annotation_height = 0.5,
+                           plot_new = FALSE)
+  dev.off()
+
+  #clean up
+  if (isTRUE(clean_up)) {
+    unlink(temp_dir, recursive = TRUE)
+  }
+
+
+
+}

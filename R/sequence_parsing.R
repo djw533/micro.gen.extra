@@ -72,19 +72,25 @@ fasta_from_gff_list <- function(gff_list,gff_names,fasta_dir = ".", clean_up = T
   #gff_names = a list of names to be used for each file in gff_list, in the same order
 
 
-
-  # if (dir.exists(fasta_dir)) {
-  #   stop(glue::glue("{fasta_dir} already exists. Exiting."))
-  # } else {
-  #   dir.create(fasta_dir)
-  # }
+  if (fasta_dir != ".") {
+    if (dir.exists(fasta_dir)) {
+      stop(glue::glue("{fasta_dir} already exists. Exiting."))
+    } else {
+      dir.create(fasta_dir)
+    }
+  }
 
   #iterate over the set of gff files
-  output_fasta_list <- purrr::map(gff_list, ~ fasta_from_single_gff(.x, fasta_dir, clean_up))
+  output_fasta_list <- purrr::map(gff_list, ~ fasta_from_single_gff(.x, fasta_dir, clean_up = FALSE))
 
   #now set the names:
   names(output_fasta_list) <- gff_names
 
+  #write out if write_fasta == TRUE:
+
+  if (isTRUE(clean_up)) {
+    unlink(fasta_dir, recursive = TRUE)
+  }
 
   return(output_fasta_list)
 
