@@ -9,6 +9,7 @@
 * gplots
 * RColorBrewer  
 * ggtree
+* phytools
 * ape
 * castor
 * purrr
@@ -25,7 +26,7 @@
 # Install dependencies
 
 ```R
-install.packages(c("dplyr", "ggplot2", "stringr", "gplots", "RColorBrewer", "ape", "castor", "purrr", "glue", "tibble", "seqinr","genoPlotR","vegan", "UpSetR", "cowplot", "Peptides"))
+install.packages(c("dplyr", "ggplot2", "stringr", "gplots", "RColorBrewer", "phytools", "ape", "castor", "purrr", "glue", "tibble", "seqinr","genoPlotR","vegan", "UpSetR", "cowplot", "Peptides"))
 
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
