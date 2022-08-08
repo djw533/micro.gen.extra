@@ -4,12 +4,21 @@
 \alias{plot_synteny_gff_files}
 \title{Take a list of "x" gff3 files and create a synteny plot}
 \usage{
-plot_synteny_gff_files(gff_list, output_prefix)
+plot_synteny_gff_files(
+  gff_list,
+  output_prefix = "synteny_plot",
+  temp_dir = "temp_fasta",
+  clean_up = TRUE
+)
 }
 \arguments{
 \item{gff_list}{Input list of gff files (with extensions to paths)}
 
 \item{output_prefix}{Prefix for the output files (svg and png)}
+
+\item{temp_dir}{Directory to put fasta files into [Default = "temp_fasta"]}
+
+\item{clean_up}{TRUE/FALSE - clean up the temp fasta directory [Default = TRUE]}
 }
 \value{
 A png and svg file of synteny plots produced using genoplotR

@@ -19,12 +19,13 @@
 * vegan
 * UpSetR
 * cowplot
+* Peptides
 
 
 # Install dependencies
 
 ```R
-install.packages(c("dplyr", "ggplot2", "stringr", "gplots", "RColorBrewer", "ape", "castor", "purrr", "glue", "tibble", "seqinr","genoPlotR","vegan", "UpSetR", "cowplot"))
+install.packages(c("dplyr", "ggplot2", "stringr", "gplots", "RColorBrewer", "ape", "castor", "purrr", "glue", "tibble", "seqinr","genoPlotR","vegan", "UpSetR", "cowplot", "Peptides"))
 
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")

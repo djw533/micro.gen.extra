@@ -141,4 +141,56 @@ protein_from_sequence <- function(fasta_sequence,start,end,strand) {
 }
 
 
+#' Read in sequence data and fasta header from a fasta file into a tidy dataframe
+#'
+#' Read in sequence data and fasta header from a fasta file into a tidy dataframe.
+#' Specify whether amino acid or DNA sequence in fasta file.
+#' If amino acid sequences, pI and molecular weight will be calculated
+#'
+#' @param fasta_file Input fasta file
+#' @param type One of "DNA" or "AA" - default = "AA"
+#'
+#' @return Data frame with sequences and headers from a fasta file (plus molecular weight and pI if fasta file is protein sequences)
+#' @examples
+#' fasta_to_df("path/to/file.fasta", type = "AA")
+#'
+fasta_to_df <- function(fasta_file, type = "AA") {
+
+  #check input type
+
+  if (! type %in% c("AA","DNA")) {
+    stop("type must by either 'AA' or 'DNA'")
+  }
+
+  #read in fasta
+  fasta_list <-  seqinr::read.fasta(fasta_file,seqtype = type)
+
+  #convert to dataframe by taking each of the different details from the list
+  # (names of the list are the header entry (until a space delimiter in the header description - this goes to details [Annot in seqinr]))
+  fasta_df <- data.frame(id = names(fasta_list))
+  fasta_df$sequences <- purrr::map(names(fasta_list), ~(seqinr::getSequence(fasta_list[[.x]])))
+  fasta_df$name <- purrr::map(names(fasta_list), ~(seqinr::getName(fasta_list[[.x]])))
+  fasta_df$details <- purrr::map(names(fasta_list), ~(seqinr::getAnnot(fasta_list[[.x]])))
+  fasta_df$class <- type
+
+
+  if (type == "AA") { # add pI and kDa
+
+    #add pI
+    fasta_df$pI <- purrr::map(fasta_df$sequences, ~(seqinr::AAstat(unlist(.x),plot=F)$Pi))
+
+    #add kDa
+    fasta_df$mw <- Peptides::mw(fasta_df$sequences)
+  }
+
+
+  return(fasta_df)
+
+}
+
+
+
+
+
+
 

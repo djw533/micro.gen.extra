@@ -28,5 +28,6 @@ Imports:
   vegan,
   UpSetR,
   tools,
-  cowplot
+  cowplot,
+  Peptides
 RoxygenNote: 7.1.2
