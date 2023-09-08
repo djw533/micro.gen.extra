@@ -1,57 +1,62 @@
 #' Get members (genes) of a set intersection shown in an UpsetR plot
 #'
 #' Given a list of groups in a set analysis plotted in UpsetR, get all members
-#' (i.e. Genes in this instance) in the intersection of those sets. Built to extract genes
-#' in a panaroo dataset.
+#' (i.e. Genes in this instance) in the intersection of those sets. Built to 
+#' extract genes in a panaroo dataset.
 #'
-#' @param upset_df UpsetR dataframe (with the members column labelled as "Gene")
-#' @param groups List of the groups to get the intersection for
-#' @param exclusive TRUE/FALSE. If TRUE, only get the intersection of ONLY the groups in groups.
-#' If FALSE, return all values shared by the groups in groups, irrespective of whether those values
-#' are also in other groups. [Default = TRUE]
+#' @param upset_df  UpsetR dataframe (with the members column labelled as 
+#'                  "Gene")
+#' @param groups    List of the groups to get the intersection for
+#' @param exclusive TRUE/FALSE. If TRUE, only get the intersection of ONLY the 
+#'                  groups in groups.
+#'                  If FALSE, return all values shared by the groups in groups,
+#'                  irrespective of whether those values are also in other 
+#'                  groups. [Default = TRUE]
 #'
 #' @return List of all members in the intersection
 #' @examples
 #' get_intersect_members(dataframe_used_for_upsetR_plot, list_of_groups)
 
-
-get_intersect_members <- function (upset_df, groups, exclusive = TRUE){
-
+get_intersect_members <- function (
+    .upset_df, .groups, .ids = "Gene", .exclusive = TRUE
+){
 
   # try to work out the rowsums
-
-  all_rowssums <- upset_df %>%
-    rowwise %>%
+  all_rowssums <- .upset_df %>%
+    #rowwise %>%
+    rowwise() %>%
     mutate(row.sum = sum(c_across(where(is.numeric))))
-
-
-  if (isTRUE(exclusive)) {
-
-    selected_rowssums <- upset_df %>%
-      tidyr::pivot_longer(!Gene, names_to = "group", values_to = "presence") %>%
-      filter(group %in% groups) %>%
-      tidyr::pivot_wider(names_from = "group", values_from = "presence") %>%
-      rowwise %>%
-      mutate(row.sum.filtered = sum(c_across(where(is.numeric)))) %>%
-      full_join(all_rowssums) %>%
-      mutate(intersection = ifelse( (row.sum.filtered == row.sum & row.sum.filtered > 0 & row.sum.filtered == length(groups)), T, F)) %>% # find instances where the rowsums for the selected groups and the rowsums for all groups are the same and also more than 0
-      filter(isTRUE(intersection))
-  }
-
-  if ( isFALSE(exclusive)) {
-    selected_rowssums <- upset_df %>%
-      tidyr::pivot_longer(!Gene, names_to = "group", values_to = "presence") %>%
-      filter(group %in% groups) %>%
-      tidyr::pivot_wider(names_from = "group", values_from = "presence") %>%
-      rowwise %>%
-      mutate(row.sum.filtered = sum(c_across(where(is.numeric)))) %>%
-      full_join(all_rowssums) %>%
-      mutate(intersection = ifelse( row.sum.filtered == length(groups), T, F)) %>% # find instances where the rowsums for the selected groups and the rowsums for all groups are the same and also more than 0
-      filter(isTRUE(intersection))
-  }
-
-  return(selected_rowssums$Gene)
-
+  
+  
+  .upset_df %>%
+    tidyr::pivot_longer(
+      cols      = !all_of(.ids),
+      names_to  = "group",
+      values_to = "presence"
+    ) %>%
+    filter(group %in% .groups) %>%
+    tidyr::pivot_wider(names_from = "group", values_from = "presence") %>%
+    rowwise() %>%
+    mutate(row.sum.filtered = sum(c_across(where(is.numeric)))) %>%
+    full_join(all_rowssums) %>%
+    # Find instances where the rowsums for the selected groups and the rowsums 
+    # for all groups are the same and also more than 0
+    mutate(intersection = case_when(
+      isTRUE(.exclusive)  ~ ifelse(
+        test = row.sum.filtered == row.sum &
+          row.sum.filtered > 0 &
+          row.sum.filtered == length(.groups),
+        yes  = T,
+        no   = F
+      ),
+      isFALSE(.exclusive) ~ ifelse(
+        test = row.sum.filtered == length(.groups),
+        yes  = T,
+        no   = F
+      )
+    )) %>%
+    filter(isTRUE(intersection)) %>% 
+    pull(.ids)
 }
 
 
