@@ -18,23 +18,23 @@
 #' get_intersect_members(dataframe_used_for_upsetR_plot, list_of_groups)
 
 get_intersect_members <- function (
-    .upset_df, .groups, .ids = "Gene", .exclusive = TRUE
+    upset_df, groups, ids = "Gene", exclusive = TRUE
 ){
 
   # try to work out the rowsums
-  all_rowssums <- .upset_df %>%
+  all_rowssums <- upset_df %>%
     #rowwise %>%
     rowwise() %>%
     mutate(row.sum = sum(c_across(where(is.numeric))))
   
   
-  .upset_df %>%
+  upset_df %>%
     tidyr::pivot_longer(
-      cols      = !all_of(.ids),
+      cols      = !all_of(ids),
       names_to  = "group",
       values_to = "presence"
     ) %>%
-    filter(group %in% .groups) %>%
+    filter(group %in% groups) %>%
     tidyr::pivot_wider(names_from = "group", values_from = "presence") %>%
     rowwise() %>%
     mutate(row.sum.filtered = sum(c_across(where(is.numeric)))) %>%
@@ -42,21 +42,21 @@ get_intersect_members <- function (
     # Find instances where the rowsums for the selected groups and the rowsums 
     # for all groups are the same and also more than 0
     mutate(intersection = case_when(
-      isTRUE(.exclusive)  ~ ifelse(
+      isTRUE(exclusive)  ~ ifelse(
         test = row.sum.filtered == row.sum &
           row.sum.filtered > 0 &
-          row.sum.filtered == length(.groups),
+          row.sum.filtered == length(groups),
         yes  = T,
         no   = F
       ),
-      isFALSE(.exclusive) ~ ifelse(
-        test = row.sum.filtered == length(.groups),
+      isFALSE(exclusive) ~ ifelse(
+        test = row.sum.filtered == length(groups),
         yes  = T,
         no   = F
       )
     )) %>%
     filter(isTRUE(intersection)) %>% 
-    pull(.ids)
+    pull(ids)
 }
 
 
