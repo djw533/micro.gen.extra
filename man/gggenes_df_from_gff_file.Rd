@@ -4,7 +4,7 @@
 \alias{gggenes_df_from_gff_file}
 \title{Create a dataframe for input to gggenes from a single gff3 file}
 \usage{
-gggenes_df_from_gff_file(gff_file)
+gggenes_df_from_gff_file(file)
 }
 \arguments{
 \item{gff_file}{Gff file input}

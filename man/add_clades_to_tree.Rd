@@ -11,7 +11,9 @@ add_clades_to_tree(
   aligned = TRUE,
   extend_to_value = 0,
   highlight_alpha = 0.4,
-  label_offset = 0
+  label_offset = 0,
+  gradient = F,
+  gradient_direction = "tr"
 )
 }
 \arguments{
@@ -27,7 +29,11 @@ add_clades_to_tree(
 
 \item{highlight_alpha}{Value to set the alpha of the ggtree::geom_hilight. Set between 0 and 1. [Default = 0.4]}
 
-\item{label_offset}{Value to offset the labels of the clade_labels. [Default = 0.0]}
+\item{label_offset}{Value to offset the labels of the clade_labels. [Default = F]}
+
+\item{gradient}{T/F for whether hilighted box should have a gradient (one of "rt" or "tr" [root-to-tip or tip-to-root]) [Default = "tr"]}
+
+\item{gradient_drcton}{Gradient direction [Default = 0.0]}
 }
 \value{
 ggtree object with clades (corresponding to the internal nodes supplied) have been highlighted and labelled.

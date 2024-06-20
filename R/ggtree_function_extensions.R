@@ -141,7 +141,9 @@ get_clade_nodes <- function(tree, clusters_df) {
 #' @param aligned TRUE/FALSE as to whether the ggtree::geom_hilights should align [Default = TRUE]
 #' @param extend_to_value Value to extend the ggtree::geom_hilight to. Float. [Default = 0.0]
 #' @param highlight_alpha Value to set the alpha of the ggtree::geom_hilight. Set between 0 and 1. [Default = 0.4]
-#' @param label_offset Value to offset the labels of the clade_labels. [Default = 0.0]
+#' @param label_offset Value to offset the labels of the clade_labels. [Default = F]
+#' @param gradient T/F for whether hilighted box should have a gradient (one of "rt" or "tr" [root-to-tip or tip-to-root]) [Default = "tr"]
+#' @param gradient_drcton Gradient direction [Default = 0.0]
 #'
 #' @return ggtree object with clades (corresponding to the internal nodes supplied) have been highlighted and labelled.
 #'
@@ -155,7 +157,9 @@ add_clades_to_tree <- function(drawn_tree,
                                aligned = TRUE,
                                extend_to_value = 0.0,
                                highlight_alpha = 0.4,
-                               label_offset = 0.0) {
+                               label_offset = 0.0,
+                               gradient = F,
+                               gradient_direction = "tr") {
 
   #1 - tree already drawn as ggtree object
   #2 - list of the internal nodes to be labelled / highlighted as clades , with the desired labels as names of the list / vector
@@ -188,8 +192,21 @@ add_clades_to_tree <- function(drawn_tree,
 
     for (i in 1:nrow(col_df)) {
 
-      temp_ggplot <- temp_ggplot +
-        ggtree::geom_hilight(node=col_df[i,]$node, fill = col_df[i,]$color, extendto = max(temp_ggplot$data$x) + extend_to_value + 0.001 , alpha = highlight_alpha)
+      if (isFALSE(gradient)) {
+        temp_ggplot <- temp_ggplot +
+          ggtree::geom_hilight(node=col_df[i,]$node,
+                               fill = col_df[i,]$color,
+                               extendto = max(temp_ggplot$data$x) + extend_to_value + 0.001 ,
+                               alpha = highlight_alpha)
+      } else if (isTRUE(gradient)) {
+        temp_ggplot <- temp_ggplot +
+          ggtree::geom_hilight(node=col_df[i,]$node,
+                               fill = col_df[i,]$color,
+                               extendto = max(temp_ggplot$data$x) + extend_to_value + 0.001 ,
+                               alpha = highlight_alpha,
+                               type = "gradient",
+                               gradient.direction = gradient_direction)
+      }
     }
   }
 
@@ -349,6 +366,153 @@ gheatmap_with_gaps <- function(ggtree_object,
 
   return(temp_plot)
 }
+
+
+t6_gheatmap_with_gaps <- function(ggtree_object,
+                                  t6_subtypes_df,
+                                  col_width = max(ggtree_object$data$x)/5,
+                                  colname_offset = 0,
+                                  init_col_offset = 0,
+                                  col_gap = col_width / 10) {
+
+
+  cols <- c("predicted_T6SSs" = "blue",
+            "i1" = "#3cb44b",
+            "i2" = "#ffe119",
+            "i3" = "#e6194b",
+            "i4a" = "#4363d8",
+            "i4b" = "#ff1493",
+            "i5" = "#911eb4",
+            "i3v3" = "#76b7b2",
+            "i3v1" = "#ff9da7",
+            "i3v2" = "#f28e2b",
+            "Undetermined" = "grey",
+            "rejected_T6SSs" = "grey",
+            "contig_broken_T6SS" = "grey")
+
+
+  iteration <- 0
+  temp_plot <- t6_subtypes_df %>%
+    tibble::rownames_to_column(var = "strain")
+
+  #check the rownames are all in the tree:
+
+  if ( isFALSE(all(rownames(gheatmap_df) %in% subset(ggtree_object$data, isTip == TRUE)$label)) ) {
+    stop("All rownames in the gheatmap should be tips in the ggtree object. Stopping")
+  }
+
+  for (i in colnames(gheatmap_df)) {
+
+    if (iteration == 0) {
+      offset_num <- init_col_offset
+    }
+
+    iteration = iteration + 1
+
+    temp_data <- gheatmap_df %>%
+      select(i)
+
+    temp_plot <- temp_plot %>% ggtree::gheatmap(temp_data,
+                                                colnames_position = "top",
+                                                colnames_offset_y = 15,
+                                                colnames_angle = 90,
+                                                hjust = 0,
+                                                color = NULL,
+                                                width = col_width,
+                                                offset = colname_offset) +
+      scale_fill_gradient(low = "white", high = cols[i]) +
+      ggnewscale::new_scale_fill() +
+      ylim(0,max(temp_plot$data$y) + 20)
+
+
+    offset_num <- (iteration * (max(temp_plot$data$x) * col_width)) + (col_gap * iteration)
+
+  }
+
+
+  return(temp_plot)
+
+
+}
+
+
+#' Subsample a phylogenetic tree
+#'
+#' Subsample a phylogenetic tree by randomly selecting one node for all clades/subtrees of a maximum tip-root distance
+#'
+#' @param input_tree Tree object (e.g. from ape)
+#' @param cut_dist max tip-root distance to select clades to be sub-sampled
+#' @param plot_clades_to_prune plot original input tree with clades to be pruned annotated [Default = False]
+#'
+#' @return Pruned tree object
+#'
+#' @examples
+#' subsample_tree(input_tree = tree_object, cut_dist = 0.02)
+
+subsample_tree <- function(input_tree, cut_dist, plot_clades_to_prune = F) {
+
+  #2 take all subtrees in tree
+  tree.subtrees <- ape::subtrees(input_tree)
+
+  #3 filter to the distance
+  subtree_distances <- data.frame(subtree_number = seq_along(tree.subtrees)) %>%
+    mutate(tips = purrr::map(subtree_number, ~ sort(tree.subtrees[[.x]]$tip.label))) %>%
+    mutate(max.dist = as.numeric(purrr::map(subtree_number, ~ max(ape::cophenetic.phylo(tree.subtrees[[.x]])))))
+
+  #4 get all nested subtrees and remove
+  subtree_distances.filtered <- subtree_distances %>%
+    filter(max.dist <= cut_dist) %>%
+    #check if they are nested
+    mutate(nested = unlist(
+      purrr::map2(tips, subtree_number, function(a,x)
+        any(unlist(    # does subtree b contain all of the tips that are in any other subtree in the dataset?
+          purrr::map2(tips, subtree_number, function(b,y)
+            all(a %in% b) & x != y) # return whether subtree a is entirely within subtree b and make sure that a and b are not the same
+        ))
+      )
+    ))
+
+  subtree_distances.filtered.not_nested <- subtree_distances.filtered %>%
+    filter(nested == FALSE)
+
+  if (plot_clades_to_prune == TRUE) {
+    #plot this on the tree to test
+    temp_tree <- ggtree::ggtree(input_tree, right = T, ladderize = T)
+
+    for (node.num in subtree_distances.filtered.not_nested$subtree_number) {
+      temp_tree <- temp_tree +
+        ggtree::geom_cladelabel(node = as.numeric(node.num) + length(input_tree$tip.label),
+                                label = as.factor(node.num))
+    }
+
+    #write out the tree
+    ggplot2::ggsave(plot = temp_tree,
+                    filename = "original_tree_with_clades_to_prune.pdf",
+                    height = 12,
+                    width = 8)
+  }
+
+
+
+  #6 for all remaining, select one leaf per subtree, and remove the others
+  selected_tips <- subtree_distances.filtered.not_nested %>%
+    #select one tip per subtree
+    mutate(selected = purrr::map(tips, ~ sample(.x, 1))) %>%
+    # create list of all the rest
+    mutate(to_remove = purrr::map2(tips, selected, function(a,b) a[!a %in% b])) %>%
+    pull(to_remove) %>%
+    unlist()
+
+
+  pruned_tree <- micro.gen.extra::remove_tips_from_tree(tree = input_tree,
+                                                        tips = selected_tips)
+
+  #7 return the altered tree
+  return(pruned_tree)
+
+}
+
+
 
 
 

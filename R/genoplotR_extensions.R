@@ -446,6 +446,6 @@ plot_synteny_gff_files <- function(gff_list,output_prefix = "synteny_plot", temp
     unlink(temp_dir, recursive = TRUE)
   }
 
-
+  return(genoplotR_data)
 
 }

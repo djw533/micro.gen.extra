@@ -282,5 +282,96 @@ plot_hamburger <- function(hamburger_dir, strains = "all", output_dir = ".", ove
 
 
 
+#' Flip and/or centre gggenes data
+#'
+#' Flip and/or centre gggenes data for clearer visualisation
+#'
+#' @param gggenes_df gggenes data frame (with each gene cluster as "gene cluster")
+#' @param gene_on Gene to centre on / use for direction
+#' @param direction Direction for gene_on to be in [1/-1] [default = 1] (1 for right, -1 for left)
+#' @param length Either "use_max" (use the max gene co-ordinate), or "fasta_length" -
+#' @param centre Centre genes relative to all central ("gene_on") genes for each gene cluster in the dataframe [T/F]
+#'
+#' @return Data frame with each gene cluster co-ordinates set on the centre_gene and re-orientated for uniformity
+#' @examples
+#' centre_gggenes(gggenes_df = dataframe, gene_on = "TssD", direction = -1, centre = T)
+
+
+flip_gggenes <- function(gggenes_df, gene_on, direction = 1, length = "use_max", centre = F) {
+
+
+  # check input
+
+  if (! length %in% c("use_max","fasta_length")) {
+
+    stop("must use either 'use_max' or 'fasta_length")
+
+  }
+
+  if (length == "fasta_length" & ! "cluster_length" %in% colnames(gggenes_df)) {
+    stop("lengths of the gene cluster must be labelled as `cluster_length` in the dataframe")
+  }
+
+  if (! gene_on %in% gggenes_df$gene) {
+    stop("Central gene must be in the `gene` column in the input data frame")
+  }
+
+
+
+  average_position <- as.integer(mean(subset.data.frame(gggenes_df, gene == gene_on)$start)) # get average starting position for centre gene
+
+
+  output_df <- data.frame(matrix(nrow = 0, ncol = length(colnames(gggenes_df))))
+  colnames(output_df) <- colnames(gggenes_df)
+
+  for (cluster in unique(gggenes_df$gene_cluster)) {
+
+    temp_df <- subset.data.frame(gggenes_df, gene_cluster == cluster)
+    gene_direction <- subset.data.frame(temp_df, gene == gene_on)$direction
+    if (length(gene_direction) > 1) {
+      print(glue::glue("More than one {gene_on}"))
+    }
+    #print(gene_direction)
+    #
+    if (nrow(subset.data.frame(temp_df, gene == gene_on)) > 0 ) {
+      if (gene_direction == (direction * -1) )  {
+        ##### need to reverse the numbers and the directions
+        if (length == "use_max") {
+          max_length <- max(temp_df$end)
+        } else if (length == "fasta_length") {
+          max_length <- max(temp_df$cluster_length)
+        }
+
+        ## minus the length from the start and stop
+        temp_df$start <- max_length - temp_df$start
+        temp_df$end <- max_length - temp_df$end
+        ## change colnames to switch the start and the stop over
+        temp_df <- temp_df %>%
+          rename(start = end, end = start)
+        #colnames(temp_df) <- c("operon","number","end","start","gene","strand","direction")
+        ## change direction:
+        temp_df$direction <- temp_df$direction * -1
+      }
+
+      ###### correct the position of each of these if want to centre:
+      if (isTRUE(centre)) {
+        difference <- average_position + subset.data.frame(temp_df, gene == gene_on)$start
+        temp_df$start <- temp_df$start - difference
+        temp_df$end <- temp_df$end - difference
+      }
+
+    }
+    ## concatenate to new df
+    output_df <- rbind(output_df ,temp_df)
+  }
+
+  return(output_df)
+}
+
+
+
+
+
+
 
 

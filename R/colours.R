@@ -2,6 +2,8 @@
 #' Create a vector of "n" random colours
 #'
 #' Create a vector of "n" random colours using grDevices, output either hexadecimal/named colours
+#' Code to generate list of all colors to sample from taken from:
+#' """https://stackoverflow.com/questions/15282580/how-to-generate-a-number-of-most-distinctive-colors-in-r"""
 #'
 #' @param num Number of colours to generate
 #' @param hex TRUE/FALSE for hexademical colours [Default = TRUE]

@@ -35,11 +35,12 @@ gggenes_df_from_gff_list <- function(gff_list) {
                           comment.char = "",
                           fill = TRUE,
                           quote = "",
-                          header = F) %>%
-      rename(contig = V1,method = V2,type = V3, start = V4,end = V5,strand = V6 ,direction = V7 ,score = V8, details  = V9) %>%
+                          header = F,
+                          col.names = c("contig","method","type", "start","end","strand","direction","score", "details")) %>%
+      #rename(contig = V1,method = V2,type = V3, start = V4,end = V5,strand = V6 ,direction = V7 ,score = V8, details  = V9) %>%
       filter(details != "")  %>% # remove lines where there isn't a 9th column
       mutate(filename_prefix = filename_prefix) %>%
-      filter(type == "CDS") %>% # only take CDSs
+      #filter(type == "CDS") %>% # only take CDSs
       # now - if there is ONE  "ID=" string within the details column, create variable "gene" and set as the string immediately after "ID=", but before the next ";". Otherwise set as NA.
       mutate(gene = as.character(purrr::map(details, ~ ifelse(stringr::str_detect(.x, "ID=") & length(unlist(stringr::str_split(.x,"ID="))) == 2,  unlist(stringr::str_split(unlist(stringr::str_split(.x,"ID="))[2],";"))[1] , NA  )))) %>%
       # put in number for gggenes:
@@ -114,11 +115,11 @@ gggenes_df_from_gff_dir <- function(gff_dir) {
                           comment.char = "",
                           fill = TRUE,
                           quote = "",
-                          header = F) %>%
-      rename(contig = V1,method = V2,type = V3, start = V4,end = V5,strand = V6 ,direction = V7 ,score = V8, details  = V9) %>%
+                          header = F,
+                          col.names = c("contig","method","type", "start","end","strand","direction","score", "details")) %>%
       filter(details != "")  %>% # remove lines where there isn't a 9th column
       mutate(filename_prefix = filename_prefix) %>%
-      filter(type == "CDS") %>% # only take CDSs
+      #filter(type == "CDS") %>% # only take CDSs
       # now - if there is ONE  "ID=" string within the details column, create variable "gene" and set as the string immediately after "ID=", but before the next ";". Otherwise set as NA.
       mutate(gene = as.character(purrr::map(details, ~ ifelse(stringr::str_detect(.x, "ID=") & length(unlist(stringr::str_split(.x,"ID="))) == 2,  unlist(stringr::str_split(unlist(stringr::str_split(.x,"ID="))[2],";"))[1] , NA  )))) %>%
       # put in number for gggenes:
@@ -157,7 +158,7 @@ gggenes_df_from_gff_dir <- function(gff_dir) {
 #' gggenes_df_from_gff_dir("path/to/gff/file")
 
 
-gggenes_df_from_gff_file <- function(gff_file) {
+gggenes_df_from_gff_file <- function(file) {
 
 
   #set the filename
@@ -176,11 +177,11 @@ gggenes_df_from_gff_file <- function(gff_file) {
                         comment.char = "",
                         fill = TRUE,
                         quote = "",
-                        header = F) %>%
-    rename(contig = V1,method = V2,type = V3, start = V4,end = V5,strand = V6 ,direction = V7 ,score = V8, details  = V9) %>%
+                        header = F,
+                        col.names = c("contig","method","type", "start","end","strand","direction","score", "details")) %>%
     filter(details != "")  %>% # remove lines where there isn't a 9th column
     mutate(filename_prefix = filename_prefix) %>%
-    filter(type == "CDS") %>% # only take CDSs
+    #filter(type == "CDS") %>% # only take CDSs
     # now - if there is ONE  "ID=" string within the details column, create variable "gene" and set as the string immediately after "ID=", but before the next ";". Otherwise set as NA.
     mutate(gene = as.character(purrr::map(details, ~ ifelse(stringr::str_detect(.x, "ID=") & length(unlist(stringr::str_split(.x,"ID="))) == 2,  unlist(stringr::str_split(unlist(stringr::str_split(.x,"ID="))[2],";"))[1] , NA  )))) %>%
     # put in number for gggenes:
@@ -196,7 +197,7 @@ gggenes_df_from_gff_file <- function(gff_file) {
   file.remove("temp_file.gff")
 
 
-  return(gggenes_df)
+  return(temp_df)
 
 
 }
