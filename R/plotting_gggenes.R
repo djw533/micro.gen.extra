@@ -321,11 +321,12 @@ flip_gggenes <- function(gggenes_df, gene_on, direction = 1, length = "use_max",
   average_position <- as.integer(mean(subset.data.frame(gggenes_df, gene == gene_on)$start)) # get average starting position for centre gene
 
 
-  output_df <- data.frame(matrix(nrow = 0, ncol = length(colnames(gggenes_df))))
-  colnames(output_df) <- colnames(gggenes_df)
+  df_list <- list()
+  counter <- 0
 
   for (cluster in unique(gggenes_df$gene_cluster)) {
 
+    counter <- counter + 1
     temp_df <- subset.data.frame(gggenes_df, gene_cluster == cluster)
     gene_direction <- subset.data.frame(temp_df, gene == gene_on)$direction
     if (length(gene_direction) > 1) {
@@ -347,10 +348,14 @@ flip_gggenes <- function(gggenes_df, gene_on, direction = 1, length = "use_max",
         temp_df$end <- max_length - temp_df$end
         ## change colnames to switch the start and the stop over
         temp_df <- temp_df %>%
-          rename(start = end, end = start)
+          rename(start = end, end = start) %>%
+          mutate(flipped = TRUE)
         #colnames(temp_df) <- c("operon","number","end","start","gene","strand","direction")
         ## change direction:
         temp_df$direction <- temp_df$direction * -1
+      } else { # if the gene cluster was already in the correct orientation
+        temp_df <- temp_df %>%
+          mutate(flipped = FALSE)
       }
 
       ###### correct the position of each of these if want to centre:
@@ -360,12 +365,16 @@ flip_gggenes <- function(gggenes_df, gene_on, direction = 1, length = "use_max",
         temp_df$end <- temp_df$end - difference
       }
 
+    } else { # if couldn't find the gene to centre the "flipping" on
+      temp_df <- temp_df %>%
+        mutate(flipped = FALSE)
     }
-    ## concatenate to new df
-    output_df <- rbind(output_df ,temp_df)
+    ## concatenate to list
+    df_list[[counter]] <- temp_df
   }
 
-  return(output_df)
+
+  return(dplyr::bind_rows(df_list))
 }
 
 
